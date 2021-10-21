@@ -27,6 +27,7 @@ INSERT INTO player.player (person_id, active) VALUES ((SELECT id FROM nfl.player
 DROP TABLE IF EXISTS player.player_draft;
 CREATE TABLE player.player_draft ( 
     id int IDENTITY(1,1) PRIMARY KEY,
+    league_season_id int NOT NULL,
     player_id int NOT NULL,
     drafting_team_id int NOT NULL,
     draft_asset_id int NOT NULL,

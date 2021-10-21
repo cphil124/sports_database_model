@@ -64,7 +64,8 @@ VALUES (
 DROP TABLE IF EXISTS team.draft_asset;
 CREATE TABLE team.draft_asset (
     id int IDENTITY(1,1) PRIMARY KEY,
-    original_team int NOT NULL,
+    owner_team_id int NOT NULL,
+    original_team_id int NOT NULL,
     league_season_id int NOT NULL,
     pick_round int NOT NULL,
     compensatory bit NOT NULL DEFAULT 0
