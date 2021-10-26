@@ -1,21 +1,3 @@
-CREATE SCHEMA stats;
-DROP TABLE IF EXISTS stats.game;
-CREATE TABLE stats.game (
-    id int IDENTITY(1,1) PRIMARY KEY,
-    league_season_week int NOT NULL,
-    game_date datetime NOT NULL,
-    home_team_id int NOT NULL,
-    away_team_id int NOT NULL,
-    game_stadium int NOT NULL,
-    played bit NOT NULL DEFAULT 0,
-    home_team_final_score int NULL,
-    away_team_final_score int NULL,
-    FOREIGN KEY (league_season_week) REFERENCES league.season_week (id),
-    FOREIGN KEY (home_team_id) REFERENCES team.nfl_team (id),
-    FOREIGN KEY (away_team_id) REFERENCES team.nfl_team (id),
-    FOREIGN KEY (game_stadium) REFERENCES league.stadium (id)
-);
-
 -- Will only have record if player took snap on that side of ball.
 DROP TABLE IF EXISTS stats.player_game_passer_box_score;
 CREATE TABLE stats.player_game_passer_box_score (
@@ -45,7 +27,7 @@ CREATE TABLE stats.player_game_passer_box_score (
     passer_rating decimal NOT NULL DEFAULT 0,
     fourth_quarter_comeback bit NOT NULL DEFAULT 0,
     game_winning_drive bit NOT NULL DEFAULT 0,
-    FOREIGN KEY (game_id) REFERENCES stats.game (id),
+    FOREIGN KEY (game_id) REFERENCES league.game (id),
     FOREIGN KEY (team_player_id) REFERENCES team.roster (id)
 );
 
@@ -83,7 +65,7 @@ CREATE TABLE stats.player_game_rec_rush_box_score (
     fumbles_lost int NOT NULL DEFAULT 0,
     fumbles_recovered int NOT NULL DEFAULT 0,
     fumbles_recovered_yards int NOT NULL DEFAULT 0,
-    FOREIGN KEY (game_id) REFERENCES stats.game (id),
+    FOREIGN KEY (game_id) REFERENCES league.game (id),
     FOREIGN KEY (team_player_id) REFERENCES team.roster (id)
 );
 
@@ -117,7 +99,7 @@ CREATE TABLE stats.player_game_defensive_box_score (
     qb_hits int NOT NULL DEFAULT 0,
     missed_tackles int NOT NULL DEFAULT 0,
     safeties int NOT NULL DEFAULT 0,
-    FOREIGN KEY (game_id) REFERENCES stats.game (id),
+    FOREIGN KEY (game_id) REFERENCES league.game (id),
     FOREIGN KEY (team_player_id) REFERENCES team.roster (id)
 );
 
@@ -152,7 +134,7 @@ CREATE TABLE stats.player_game_kick_box_score (
     punt_yards_gained int NOT NULL DEFAULT 0,
     long_punt int NOT NULL DEFAULT 0,
     punts_blocked int NOT NULL DEFAULT 0,
-    FOREIGN KEY (game_id) REFERENCES stats.game (id),
+    FOREIGN KEY (game_id) REFERENCES league.game (id),
     FOREIGN KEY (team_player_id) REFERENCES team.roster (id)
 );
 
@@ -171,6 +153,6 @@ CREATE TABLE stats.player_game_return_box_score (
     kick_return_yards int NOT NULL DEFAULT 0,
     kick_return_tds int NOT NULL DEFAULT 0,
     long_kick_return int NOT NULL DEFAULT 0,
-    FOREIGN KEY (game_id) REFERENCES stats.game (id),
+    FOREIGN KEY (game_id) REFERENCES league.game (id),
     FOREIGN KEY (team_player_id) REFERENCES team.roster (id)
 );

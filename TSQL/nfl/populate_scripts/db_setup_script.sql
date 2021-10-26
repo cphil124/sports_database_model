@@ -51,29 +51,28 @@ GO
     ,('Tennessee Titans', 'Tennessee', 'TEN',(SELECT id FROM state.state_codes WHERE state_name = 'Tennessee'), @afc_s)
     ,('Buffalo Bills', 'Buffalo', 'BUF',(SELECT id FROM state.state_codes WHERE state_name = 'New York'), @afc_e)
     ,('Miami Dolphins', 'Miami', 'MIA',(SELECT id FROM state.state_codes WHERE state_name = 'Florida'), @afc_e)
-    ,('New England Patriots', 'New England', 'NE',(SELECT id FROM state.state_codes WHERE state_name = 'Massachusetts'), @afc_e)
+    ,('New England Patriots', 'New England', 'NWE',(SELECT id FROM state.state_codes WHERE state_name = 'Massachusetts'), @afc_e)
     ,('New York Jets', 'New York', 'NYJ',(SELECT id FROM state.state_codes WHERE state_name = 'New York'), @afc_e)
     ,('Denver Broncos', 'Denver', 'DEN',(SELECT id FROM state.state_codes WHERE state_name = 'Colorado'), @afc_w)
-    ,('Kansas City Chiefs', 'Kansas City', 'KC',(SELECT id FROM state.state_codes WHERE state_name = 'Missouri'), @afc_w)
-    ,('Las Vegas Raiders', 'Las Vegas', 'LV',(SELECT id FROM state.state_codes WHERE state_name = 'Nevada'), @afc_w)
+    ,('Kansas City Chiefs', 'Kansas City', 'KAN',(SELECT id FROM state.state_codes WHERE state_name = 'Missouri'), @afc_w)
+    ,('Las Vegas Raiders', 'Las Vegas', 'LVR',(SELECT id FROM state.state_codes WHERE state_name = 'Nevada'), @afc_w)
     ,('Los Angeles Chargers', 'Los Angeles', 'LAC',(SELECT id FROM state.state_codes WHERE state_name = 'California'), @afc_w)
     ,('Chicago Bears', 'Chicago', 'CHI',(SELECT id FROM state.state_codes WHERE state_name = 'Illinois'), @nfc_n)
     ,('Detroit Lions', 'Detroit', 'DET',(SELECT id FROM state.state_codes WHERE state_name = 'Michigan'), @nfc_n)
-    ,('Green Bay Packers', 'Green Bay', 'GB',(SELECT id FROM state.state_codes WHERE state_name = 'Wisconsin'), @nfc_n)
+    ,('Green Bay Packers', 'Green Bay', 'GNB',(SELECT id FROM state.state_codes WHERE state_name = 'Wisconsin'), @nfc_n)
     ,('Minnesota Vikings', 'Minnesota', 'MIN',(SELECT id FROM state.state_codes WHERE state_name = 'Minnesota'), @nfc_n)
     ,('Atlanta Falcons', 'Atlanta', 'ATL',(SELECT id FROM state.state_codes WHERE state_name = 'Georgia'), @nfc_s)
     ,('Carolina Panthers', 'Carolinas', 'CAR',(SELECT id FROM state.state_codes WHERE state_name = 'North Carolina'), @nfc_s)
-    ,('New Orleans Saints', 'New Orleans', 'NO',(SELECT id FROM state.state_codes WHERE state_name = 'Louisiana'), @nfc_s)
-    ,('Tampa Bay Buccaneers', 'Tampa', 'TB',(SELECT id FROM state.state_codes WHERE state_name = 'Florida'), @nfc_s)
+    ,('New Orleans Saints', 'New Orleans', 'NOR',(SELECT id FROM state.state_codes WHERE state_name = 'Louisiana'), @nfc_s)
+    ,('Tampa Bay Buccaneers', 'Tampa', 'TAM',(SELECT id FROM state.state_codes WHERE state_name = 'Florida'), @nfc_s)
     ,('Dallas Cowboys', 'Dallas', 'DAL',(SELECT id FROM state.state_codes WHERE state_name = 'Texas'), @nfc_e)
     ,('New York Giants', 'New York', 'NYG',(SELECT id FROM state.state_codes WHERE state_name = 'New York'), @nfc_e)
     ,('Philadelphia Eagles', 'Philadelphia', 'PHI',(SELECT id FROM state.state_codes WHERE state_name = 'Pennsylvania'), @nfc_e)
     ,('Washington Football Team', 'Washington DC', 'WAS',(SELECT id FROM state.state_codes WHERE state_name = 'District of Columbia'), @nfc_e)
     ,('Arizona Cardinals', 'Arizona', 'ARI',(SELECT id FROM state.state_codes WHERE state_name = 'Arizona'), @nfc_w)
     ,('Los Angeles Rams', 'Los Angeles', 'LAR',(SELECT id FROM state.state_codes WHERE state_name = 'California'), @nfc_w)
-    ,('San Francisco 49ers', 'San Francisco', 'SF',(SELECT id FROM state.state_codes WHERE state_name = 'California'), @nfc_w)
+    ,('San Francisco 49ers', 'San Francisco', 'SFO',(SELECT id FROM state.state_codes WHERE state_name = 'California'), @nfc_w)
     ,('Seattle Seahawks', 'Seattle', 'SEA',(SELECT id FROM state.state_codes WHERE state_name = 'Washington'), @nfc_w)
-	
 
     -- team.season_finish_type
 	PRINT('Team Season Finish Type')
@@ -246,10 +245,19 @@ GO
     -- player.football_positions
 	PRINT('Loading Player Football Positions')
 	DBCC CHECKIDENT ('player.football_positions', RESEED, 0)
-    INSERT INTO player.football_positions (position_name, position_type_id) 
-    VALUES ('Quarterback', 1), ('Wide Receiver', 1), ('Halfback (Running Back)', 1), ('Fullback', 1), ('Center', 1), ('Offensive Guard', 1), ('Offensive Tackle', 1), ('Tight End', 1),
-    ('Corner Back', 2), ('Defensive Tackle', 2), ('Defensive End', 2), ('Middle Linebacker', 2), ('Outside Linebacker', 2), ('Safety', 2), ('Nickelback', 2),
-    ('Place Kicker', 3), ('Kickoff Specialist', 3), ('Punter', 3), ('Holder', 3), ('Long Snapper', 3), ('Kick Returner', 3), ('Punt Returner', 3), ('Upback', 3), ('Gunner', 3), ('Jammer', 3)
+    SET IDENTITY_INSERT player.football_positions ON
+    INSERT INTO player.football_positions (id, position_name, position_abbreviation, position_type_id) 
+    VALUES (-1, 'PlaceHolder','PLA', 1)
+    SET IDENTITY_INSERT player.football_positions OFF
+
+    INSERT INTO player.football_positions (position_name, position_abbreviation, position_type_id) 
+    VALUES ('Quarterback', 'QB', 1), ('Wide Receiver', 'WR', 1), ('Running Back', 'RB', 1), ('Halfback', 'HB', 1), ('Fullback', 'FB', 1), 
+    ('Center', 'C', 1), ('Offensive Guard', 'OG', 1), ('Offensive Tackle', 'OT', 1), ('Right Guard', 'RG', 1),('Left Guard', 'LG', 1),
+    ('RIght Tackle', 'RT', 1),('Left Tackle', 'LG', 1),('Tight End', 'TE', 1),('Corner Back', 'CB', 2), ('Defensive Tackle', 'DT', 2), 
+    ('Defensive End', 'DE', 2), ('Linebacker', 'LB', 2), ('Inside Linebacker', 'ILB', 2), ('Middle Linebacker', 'MLB', 2), 
+    ('Outside Linebacker', 'OLB', 2), ('Safety', 'S', 2), ('Strong Safety', 'SS', 2),('Free Safety', 'FS', 2),('Nickelback', 'NB', 2),
+    ('Place Kicker', 'K', 3), ('Kickoff Specialist', 'KS', 3), ('Punter', 'P', 3), ('Holder', 'H', 3), ('Long Snapper', 'LS', 3), 
+    ('Kick Returner', 'KR', 3), ('Punt Returner', 'PR', 3), ('Upback', 'UB', 3), ('Gunner', 'G', 3), ('Jammer', 'J', 3)
     
 
     -- player.transaction_type
@@ -355,8 +363,20 @@ GO
     FROM team.nfl_team t 
     CROSS JOIN league.season ls
     WHERE ls.league_starting_calendar_year = 2020
+
+
+    DECLARE @first int, @last int;
+    SET @first = (SELECT MIN(league_starting_calendar_year)-1 FROM league.season)
+    SET @last = (SELECT MAX(league_starting_calendar_year) FROM league.season)
+    DBCC CHECKIDENT ('team.draft_asset', RESEED, 0)
+    WHILE (@first < @last)
+    BEGIN
+        SET @first = @first + 1
+        EXEC league.create_draft_assets @first
+    END
     
 COMMIT;
+
 
 USE master
 GO

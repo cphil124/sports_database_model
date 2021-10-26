@@ -72,3 +72,20 @@ CREATE TABLE league.stadium (
     FOREIGN KEY (stadium_ownership_type_id) REFERENCES team.stadium_ownership_type (id)
 );
 INSERT INTO league.stadium (stadium_name, city_name, stadium_ownership_id) VALUES ('Gillette Stadium', 'Foxborough', 1)
+
+DROP TABLE IF EXISTS league.game;
+CREATE TABLE league.game (
+    id int IDENTITY(1,1) PRIMARY KEY,
+    league_season_week int NOT NULL,
+    game_date datetime NOT NULL,
+    home_team_id int NOT NULL,
+    away_team_id int NOT NULL,
+    game_stadium int NOT NULL,
+    played bit NOT NULL DEFAULT 0,
+    home_team_final_score int NULL,
+    away_team_final_score int NULL,
+    FOREIGN KEY (league_season_week) REFERENCES league.season_week (id),
+    FOREIGN KEY (home_team_id) REFERENCES team.nfl_team (id),
+    FOREIGN KEY (away_team_id) REFERENCES team.nfl_team (id),
+    FOREIGN KEY (game_stadium) REFERENCES league.stadium (id)
+);

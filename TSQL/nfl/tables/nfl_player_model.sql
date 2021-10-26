@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS player.football_positions;
 CREATE TABLE player.football_positions (
     id int IDENTITY(1,1) PRIMARY KEY,
     position_name nvarchar(30) NOT NULL,
+    position_abbreviation nvarchar(3) NOT NULL,
     position_type_id int NOT NULL,
 	FOREIGN KEY (position_type_id) REFERENCES player.position_types (id)
 );
@@ -27,14 +28,16 @@ INSERT INTO player.player (person_id, active) VALUES ((SELECT id FROM nfl.player
 DROP TABLE IF EXISTS player.player_draft;
 CREATE TABLE player.player_draft ( 
     id int IDENTITY(1,1) PRIMARY KEY,
-    league_season_id int NOT NULL,
+    league_season int NOT NULL,
     player_id int NOT NULL,
     drafting_team_id int NOT NULL,
     draft_asset_id int NOT NULL,
-    draft_position int NOT NULL,
+    draft_position_id int NOT NULL,
 	FOREIGN KEY (player_id) REFERENCES player.player (id),
 	FOREIGN KEY (drafting_team_id) REFERENCES team.nfl_team (id),
-    FOREIGN KEY (draft_asset_id) REFERENCES team.draft_asset (id)
+    FOREIGN KEY (draft_asset_id) REFERENCES team.draft_asset (id),
+	FOREIGN KEY (league_season) REFERENCES league.season ([league_starting_calendar_year]),
+    FOREIGN KEY (draft_position_id) REFERENCES player.football_positions (id)
 )
 INSERT INTO player.player_draft (player_id, drafting_team_id, draft_season, draft_position, draft_round)
 VALUES (

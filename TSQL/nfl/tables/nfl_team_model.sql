@@ -66,11 +66,16 @@ CREATE TABLE team.draft_asset (
     id int IDENTITY(1,1) PRIMARY KEY,
     owner_team_id int NOT NULL,
     original_team_id int NOT NULL,
-    league_season_id int NOT NULL,
+    league_season int NOT NULL,
     pick_round int NOT NULL,
-    compensatory bit NOT NULL DEFAULT 0
-    FOREIGN KEY (original_team) REFERENCES team.nfl_team (id),
-    FOREIGN KEY (league_season_id) REFERENCES league.season (league_starting_calendar_year)
+    pick_player_id int NULL,
+    pick_position int NULL,
+    compensatory bit NOT NULL DEFAULT 0,
+    used bit NOT NULL DEFAULT 0,
+    FOREIGN KEY (original_team_id) REFERENCES team.nfl_team (id),
+    FOREIGN KEY (owner_team_id) REFERENCES team.nfl_team (id),
+    FOREIGN KEY (pick_player_id) REFERENCES player.player (id),
+    FOREIGN KEY (league_season) REFERENCES league.season (league_starting_calendar_year)
 );
  
 DROP TABLE IF EXISTS team.roster;
@@ -79,12 +84,21 @@ CREATE TABLE team.roster (
     team_id int NOT NULL,
     player_id int NOT NULL,
     jersey_number int NOT NULL,
-    player_roster_position_id int NOT NULL,
-    FOREIGN KEY (player_roster_position_id) REFERENCES player.position_types (id),
+    FOREIGN KEY (player_roster_position_id) REFERENCES player.football_positions (id),
 	FOREIGN KEY (player_id) REFERENCES player.player (id)
 );
 INSERT INTO team.roster (team_id, player_id, jersey_number, player_primary_position_id)
 VALUES ((SELECT id FROM player.player WHERE person_id = 3), (SELECT id FROM team.nfl_team WHERE team_name = 'New England Patriots'), 12, 1)
+
+DROP TABLE IF EXISTS team.roster_positions;
+CREATE TABLE team.roster_positions (
+    id int IDENTITY(1,1) PRIMARY KEY,
+    roster_id int NOT NULL,
+    football_position_id int NOT NULL,
+    FOREIGN KEY (roster_id) REFERENCES team.roster (id),
+    FOREIGN KEY (football_position_id) REFERENCES player.football_positions (id)
+
+)
 
 DROP TABLE IF EXISTS team.stadium_ownership_type;
 CREATE TABLE team.stadium_ownership_type(
@@ -105,8 +119,11 @@ CREATE TABLE team.home_stadium (
 DROP TABLE IF EXISTS team.trade_log;
 CREATE TABLE team.trade_log (
     id int IDENTITY(1,1) PRIMARY KEY,
-    date_trade_finalized date NOT NULL
-);
+    league_season int NOT NULL,
+    date_trade_finalized date NOT NULL,
+    FOREIGN KEY (league_season) REFERENCES league.season (league_starting_calendar_year)
+)
+GO;
 INSERT INTO team.trade_log (date_trade_finalized) VALUES ('1/1/2001');
 
 DROP TABLE IF EXISTS team.trade_asset_transfer;

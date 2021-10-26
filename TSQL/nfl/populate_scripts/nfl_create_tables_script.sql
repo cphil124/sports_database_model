@@ -90,6 +90,7 @@ DROP TABLE IF EXISTS player.football_positions;
 CREATE TABLE player.football_positions (
     id int IDENTITY(1,1) PRIMARY KEY,
     position_name nvarchar(30) NOT NULL,
+    position_abbreviation nvarchar(3) NOT NULL,
     position_type_id int NOT NULL,
 	FOREIGN KEY (position_type_id) REFERENCES player.position_types (id)
 )
@@ -163,13 +164,19 @@ GO
 DROP TABLE IF EXISTS team.draft_asset;
 CREATE TABLE team.draft_asset (
     id int IDENTITY(1,1) PRIMARY KEY,
-    original_team int NOT NULL,
-    league_season_id int NOT NULL,
+    owner_team_id int NOT NULL,
+    original_team_id int NOT NULL,
+    league_season int NOT NULL,
     pick_round int NOT NULL,
-    compensatory bit NOT NULL DEFAULT 0
-    FOREIGN KEY (original_team) REFERENCES team.nfl_team (id),
-    FOREIGN KEY (league_season_id) REFERENCES league.season (league_starting_calendar_year)
-)
+    pick_player_id int NULL,
+    pick_position int NULL,
+    compensatory bit NOT NULL DEFAULT 0,
+    used bit NOT NULL DEFAULT 0,
+    FOREIGN KEY (original_team_id) REFERENCES team.nfl_team (id),
+    FOREIGN KEY (owner_team_id) REFERENCES team.nfl_team (id),
+    FOREIGN KEY (pick_player_id) REFERENCES player.player (id),
+    FOREIGN KEY (league_season) REFERENCES league.season (league_starting_calendar_year)
+);
 GO
  
 DROP TABLE IF EXISTS team.roster;
@@ -178,9 +185,18 @@ CREATE TABLE team.roster (
     team_id int NOT NULL,
     player_id int NOT NULL,
     jersey_number int NOT NULL,
-    player_roster_position_id int NOT NULL,
-    FOREIGN KEY (player_roster_position_id) REFERENCES player.position_types (id),
 	FOREIGN KEY (player_id) REFERENCES player.player (id)
+);
+GO
+
+DROP TABLE IF EXISTS team.roster_positions;
+CREATE TABLE team.roster_positions (
+    id int IDENTITY(1,1) PRIMARY KEY,
+    roster_id int NOT NULL,
+    football_position_id int NOT NULL,
+    FOREIGN KEY (roster_id) REFERENCES team.roster (id),
+    FOREIGN KEY (football_position_id) REFERENCES player.football_positions (id)
+
 )
 GO
 
@@ -241,13 +257,16 @@ GO
 DROP TABLE IF EXISTS player.player_draft;
 CREATE TABLE player.player_draft ( 
     id int IDENTITY(1,1) PRIMARY KEY,
+    league_season int NOT NULL,
     player_id int NOT NULL,
     drafting_team_id int NOT NULL,
     draft_asset_id int NOT NULL,
-    draft_position int NOT NULL,
+    draft_position_id int NOT NULL,
 	FOREIGN KEY (player_id) REFERENCES player.player (id),
 	FOREIGN KEY (drafting_team_id) REFERENCES team.nfl_team (id),
-    FOREIGN KEY (draft_asset_id) REFERENCES team.draft_asset (id)
+    FOREIGN KEY (draft_asset_id) REFERENCES team.draft_asset (id),
+	FOREIGN KEY (league_season) REFERENCES league.season ([league_starting_calendar_year]),
+    FOREIGN KEY (draft_position_id) REFERENCES player.football_positions (id)
 )
 
 DROP TABLE IF EXISTS player.transaction_type;
@@ -272,7 +291,8 @@ CREATE TABLE player.player_transaction (
 )
 GO
 
-CREATE TABLE stats.game (
+DROP TABLE IF EXISTS league.game;
+CREATE TABLE league.game (
     id int IDENTITY(1,1) PRIMARY KEY,
     league_season_week int NOT NULL,
     game_date datetime NOT NULL,
@@ -286,8 +306,7 @@ CREATE TABLE stats.game (
     FOREIGN KEY (home_team_id) REFERENCES team.nfl_team (id),
     FOREIGN KEY (away_team_id) REFERENCES team.nfl_team (id),
     FOREIGN KEY (game_stadium) REFERENCES league.stadium (id)
-)
-GO
+);
 
 DROP TABLE IF EXISTS stats.player_game_passer_box_score;
 CREATE TABLE stats.player_game_passer_box_score (
@@ -317,7 +336,7 @@ CREATE TABLE stats.player_game_passer_box_score (
     passer_rating decimal NOT NULL DEFAULT 0,
     fourth_quarter_comeback bit NOT NULL DEFAULT 0,
     game_winning_drive bit NOT NULL DEFAULT 0,
-    FOREIGN KEY (game_id) REFERENCES stats.game (id),
+    FOREIGN KEY (game_id) REFERENCES league.game (id),
     FOREIGN KEY (team_player_id) REFERENCES team.roster (id)
 )
 GO
@@ -355,7 +374,7 @@ CREATE TABLE stats.player_game_rec_rush_box_score (
     fumbles_lost int NOT NULL DEFAULT 0,
     fumbles_recovered int NOT NULL DEFAULT 0,
     fumbles_recovered_yards int NOT NULL DEFAULT 0,
-    FOREIGN KEY (game_id) REFERENCES stats.game (id),
+    FOREIGN KEY (game_id) REFERENCES league.game (id),
     FOREIGN KEY (team_player_id) REFERENCES team.roster (id)
 )
 GO
@@ -390,7 +409,7 @@ CREATE TABLE stats.player_game_defensive_box_score (
     qb_hits int NOT NULL DEFAULT 0,
     missed_tackles int NOT NULL DEFAULT 0,
     safeties int NOT NULL DEFAULT 0,
-    FOREIGN KEY (game_id) REFERENCES stats.game (id),
+    FOREIGN KEY (game_id) REFERENCES league.game (id),
     FOREIGN KEY (team_player_id) REFERENCES team.roster (id)
 )
 GO
@@ -426,7 +445,7 @@ CREATE TABLE stats.player_game_kick_box_score (
     punt_yards_gained int NOT NULL DEFAULT 0,
     long_punt int NOT NULL DEFAULT 0,
     punts_blocked int NOT NULL DEFAULT 0,
-    FOREIGN KEY (game_id) REFERENCES stats.game (id),
+    FOREIGN KEY (game_id) REFERENCES league.game (id),
     FOREIGN KEY (team_player_id) REFERENCES team.roster (id)
 )
 GO
@@ -446,9 +465,45 @@ CREATE TABLE stats.player_game_return_box_score (
     kick_return_yards int NOT NULL DEFAULT 0,
     kick_return_tds int NOT NULL DEFAULT 0,
     long_kick_return int NOT NULL DEFAULT 0,
-    FOREIGN KEY (game_id) REFERENCES stats.game (id),
+    FOREIGN KEY (game_id) REFERENCES league.game (id),
     FOREIGN KEY (team_player_id) REFERENCES team.roster (id)
 )
 GO
+
+CREATE OR ALTER PROCEDURE league.create_draft_assets
+	@league_year int
+AS
+BEGIN
+	DECLARE @preexisting_count int, @fresh_count int;;
+	CREATE TABLE #draft_stage (team_id int, round_num int)
+	
+	DECLARE @i int = 0, @rounds int = 7
+	WHILE(@i < @rounds)
+	BEGIN
+		SET @i = @i + 1
+		INSERT INTO #draft_stage (team_id, round_num)
+		SELECT id, @i
+		FROM team.nfl_team
+	END
+
+	SET @preexisting_count = (SELECT COUNT(1) FROM team.draft_asset WHERE league_season = @league_year)
+	SET @fresh_count = (SELECT COUNT(1) FROM #draft_stage)
+	IF (@fresh_count < @preexisting_count)
+	BEGIN
+		PRINT(@league_year + ' has pre-existing compensatory picks. Please manually deelte before reloading.' )
+		RAISERROR('Draft Assets already exist with additional compensatory picks added. Please delete old assets before generating new ones ', 18, 1)
+
+	END ELSE BEGIN
+		DELETE FROM team.draft_asset WHERE league_season = @league_year;
+		DECLARE @used bit = 0;
+		-- Check if draft has already taken place
+		IF @league_year  < YEAR(GETDATE()) OR (YEAR(GETDATE()) = @league_year AND DATENAME(dayofyear , GetDate()) > DATENAME(dayofyear, DATEFROMPARTS(@league_year, 4, 28)))
+		BEGIN
+			SET @used = 1
+		END
+		INSERT INTO team.draft_asset ([owner_team_id], [original_team_id], [league_season], [pick_round], [compensatory], [used])
+		SELECT team_id, team_id, @league_year, round_num, 0, @used FROM #draft_stage
+	END
+END
 
 

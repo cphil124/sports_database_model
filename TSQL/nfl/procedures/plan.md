@@ -3,9 +3,12 @@ Reassociate Player to new team
     --Update player-team to new team
     --Ensure no conflicts or duplicates
 Draft a player 
+    -- Add person record
+    -- Add player record
     -- Expire Draft Asset 
     -- Add player to player-team 
     -- Add player to roster
+
 Trade a player 
     -- Take care of trade logs
     -- Reassociate Player
